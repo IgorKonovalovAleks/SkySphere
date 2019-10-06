@@ -2,5 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="src\Source.cpp" />
+    <ClCompile Include="src\VAO.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\VAO.h" />
   </ItemGroup>
 </Project>
