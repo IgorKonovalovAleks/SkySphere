@@ -12,7 +12,7 @@ void VAO::unBind() {
 	glBindVertexArray(0);
 }
 
-void VAO::addVertexBufferObject(const std::vector<float>& data) {
+void VAO::addVertexBufferObject(const std::vector<GLfloat>& data) {
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	bind();
@@ -24,9 +24,20 @@ void VAO::addVertexBufferObject(const std::vector<float>& data) {
 	Vbuffers.push_back(vbo);
 }
 
+void VAO::addElementBufferObject(const std::vector<GLuint>& data) {
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+	bind();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(data), data.data(), GL_STATIC_DRAW);
+	
+	unBind();
+	Ebuffers.push_back(ebo);
+}
+
 void VAO::draw(GLsizei c) {
 	bind();
-	glDrawArrays(GL_TRIANGLES, 0, c);
+	glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, 0);
 
 	unBind();
 

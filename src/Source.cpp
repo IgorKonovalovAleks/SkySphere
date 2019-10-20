@@ -28,17 +28,18 @@ int main() {
 	glViewport(0, 0, width, height);
 
 	const char* vertex_shader = 
-		"#version 150\n"
-		"in vec3 position;"
+		"#version 330 core\n"
+		"layout (location = 0) in vec3 position;"
 		"void main() {"
 		"  gl_Position = vec4(position.x, position.y, position.z, 1.0);"
 		"}";
 
 	const char* fragment_shader = 
-		"#version 150\n"
-		"out vec4 frag_colour;"
+		"#version 330 core\n"
+		"out vec4 frag_color;"
+		"uniform vec4 mColor;"
 		"void main() {"
-		"  frag_colour = vec4(0.0, 0.0, 1.0, 1.0);"
+		"  frag_color = mColor;"
 		"}";
 
 	GLuint vertShader;
@@ -81,21 +82,46 @@ int main() {
 	glDeleteShader(vertShader);
 	glDeleteShader(fragShader);
 
+
+	std::vector<GLfloat> vertices = {
+	 0.5f,  0.5f, 0.0f, 
+	 0.5f, -0.5f, 0.0f, 
+	-0.5f, -0.5f, 0.0f, 
+	-0.5f,  0.5f, 0.0f  
+	};
+	std::vector<GLuint> indices = {  
+		0, 1, 3,   
+		1, 2, 3    
+	};
+
 	VAO vao;
-	vao.addVertexBufferObject(
-		{ 0.5, -0.5, 0,
-		-0.5, -0.5, 0,
-		0, 0.5, 0 }
-	);
+	vao.addVertexBufferObject(vertices);
+	vao.addElementBufferObject(indices);
 	glBindVertexArray(0);
+
+	GLfloat time;
+	GLfloat colR;
+	GLfloat colG;
+	GLfloat colB;
+	GLint form_position;
 
 	while (!glfwWindowShouldClose(win)) {
 
 		glfwPollEvents();
+
 		glClearColor(1, 1, 1, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
+		
 		glUseProgram(shaderProgram);
-		vao.draw(3);
+
+		time = glfwGetTime();
+		colR = sin(time) / 2 + 0.5;
+		colG = sin(time + 45) / 2 + 0.5;
+		colB = sin(time + 90) / 2 + 0.5;
+		form_position = glGetUniformLocation(shaderProgram, "mColor");
+		glUniform4f(form_position, colR, colG, colB, 1.0f);
+
+		vao.draw(6);
 		glfwSwapBuffers(win);
 	}
 	glDeleteProgram(shaderProgram);
