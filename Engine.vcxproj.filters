@@ -6,5 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\VAO.h" />
+    <ClInclude Include="libs\include\glm\glm.hpp" />
   </ItemGroup>
 </Project>

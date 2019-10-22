@@ -1,11 +1,14 @@
 #include <iostream>
-#include<GL/glew.h>
-#include<GL/GL.h>
+#include <GL/glew.h>
+#include <GL/GL.h>
 #include <GLFW/glfw3.h>
-#include"VAO.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "VAO.h"
 
-const int WIDTH = 854;
-const int HEIGHT = 500;
+const int WIDTH = 800;
+const int HEIGHT = 600;
 
 int main() {
 
@@ -30,8 +33,11 @@ int main() {
 	const char* vertex_shader = 
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 position;"
+		"uniform mat4 model;"
+		"uniform mat4 view;"
+		"uniform mat4 proj;"
 		"void main() {"
-		"  gl_Position = vec4(position.x, position.y, position.z, 1.0);"
+		"  gl_Position = proj * view * model * vec4(position.x, position.y, position.z, 1.0);"
 		"}";
 
 	const char* fragment_shader = 
@@ -104,6 +110,22 @@ int main() {
 	GLfloat colG;
 	GLfloat colB;
 	GLint form_position;
+	GLuint model_position; 
+	GLuint view_position;
+	GLuint proj_position;
+
+	model_position = glGetUniformLocation(shaderProgram, "model");
+	view_position = glGetUniformLocation(shaderProgram, "view");
+	proj_position = glGetUniformLocation(shaderProgram, "proj");
+	form_position = glGetUniformLocation(shaderProgram, "mColor");
+
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+
+	model = glm::rotate(model, -70.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
 	while (!glfwWindowShouldClose(win)) {
 
@@ -118,8 +140,12 @@ int main() {
 		colR = sin(time) / 2 + 0.5;
 		colG = sin(time + 45) / 2 + 0.5;
 		colB = sin(time + 90) / 2 + 0.5;
-		form_position = glGetUniformLocation(shaderProgram, "mColor");
+		
 		glUniform4f(form_position, colR, colG, colB, 1.0f);
+		
+		glUniformMatrix4fv(model_position, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(view_position, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(proj_position, 1, GL_FALSE, glm::value_ptr(proj));
 
 		vao.draw(6);
 		glfwSwapBuffers(win);
