@@ -33,19 +33,23 @@ int main() {
 	const char* vertex_shader = 
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 position;"
+		"layout (location = 1) in vec3 ourColor;"
+		"out vec3 color;"
 		"uniform mat4 model;"
 		"uniform mat4 view;"
 		"uniform mat4 proj;"
 		"void main() {"
 		"  gl_Position = proj * view * model * vec4(position.x, position.y, position.z, 1.0);"
+		"  color = ourColor;"
 		"}";
 
 	const char* fragment_shader = 
 		"#version 330 core\n"
+		"in vec3 color;"
 		"out vec4 frag_color;"
 		"uniform vec4 mColor;"
 		"void main() {"
-		"  frag_color = mColor;"
+		"  frag_color = color + mColor;"
 		"}";
 
 	GLuint vertShader;
@@ -90,10 +94,10 @@ int main() {
 
 
 	std::vector<GLfloat> vertices = {
-	 0.5f,  0.5f, 0.0f, 
-	 0.5f, -0.5f, 0.0f, 
-	-0.5f, -0.5f, 0.0f, 
-	-0.5f,  0.5f, 0.0f  
+	 0.5f,  0.5f, 0.0f, 0.5f, 0.0f, 0.0f,
+	 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
+	-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.5f,
+	-0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.0f
 	};
 	std::vector<GLuint> indices = {  
 		0, 1, 3,   
@@ -137,9 +141,9 @@ int main() {
 		glUseProgram(shaderProgram);
 
 		time = glfwGetTime();
-		colR = sin(time) / 2 + 0.5;
-		colG = sin(time + 45) / 2 + 0.5;
-		colB = sin(time + 90) / 2 + 0.5;
+		colR = sin(time) / 4 + 0.25;
+		colG = sin(time + 90) / 4 + 0.25;
+		colB = sin(time - 90) / 4 + 0.25;
 		
 		glUniform4f(form_position, colR, colG, colB, 1.0f);
 		
