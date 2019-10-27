@@ -94,14 +94,28 @@ int main() {
 
 
 	std::vector<GLfloat> vertices = {
-	 0.5f,  0.5f, 0.0f, 0.5f, 0.0f, 0.0f,
-	 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
-	-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.5f,
-	-0.5f,  0.5f, 0.0f,  0.5f, 0.5f, 0.0f
+	 0.5f,  0.5f, 0.5f, 0.5f, 0.0f, 0.0f, //up-right
+	 0.5f, -0.5f, 0.5f, 0.0f, 0.5f, 0.0f, //down-right
+	-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, //down-left
+	-0.5f,  0.5f, 0.5f,  0.5f, 0.5f, 0.0f, //up-left
+	 0.5f,  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f, 0.0f, 0.5f, 0.0f,
+	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,
+	-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.0f
 	};
 	std::vector<GLuint> indices = {  
-		0, 1, 3,   
-		1, 2, 3    
+		0, 3, 4,
+		3, 4, 7,
+		0, 1, 4,
+		4, 5, 1,
+		0, 1, 3,
+		1, 2, 3,
+		4, 7, 5,
+		5, 7, 6,
+		1, 2, 5,
+		5, 2, 6,
+		2, 6, 3,
+		3, 6, 7
 	};
 
 	VAO vao;
@@ -127,31 +141,38 @@ int main() {
 	glm::mat4 view;
 	glm::mat4 proj;
 
-	model = glm::rotate(model, -70.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+	
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
+	
+	model = glm::translate(model, glm::vec3(-0.7f, 0.2f, 0.0f));
+	model = glm::rotate(model, 30.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+	
+	glEnable(GL_DEPTH_TEST);
 
 	while (!glfwWindowShouldClose(win)) {
 
 		glfwPollEvents();
 
 		glClearColor(1, 1, 1, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		glUseProgram(shaderProgram);
-
 		time = glfwGetTime();
 		colR = sin(time) / 4 + 0.25;
 		colG = sin(time + 90) / 4 + 0.25;
 		colB = sin(time - 90) / 4 + 0.25;
+		model = glm::rotate(model, (GLfloat)time * 0.1f, glm::vec3(0.5f, 1.0f, 0.0f));
 		
+		glUseProgram(shaderProgram);
+
 		glUniform4f(form_position, colR, colG, colB, 1.0f);
 		
 		glUniformMatrix4fv(model_position, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(view_position, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(proj_position, 1, GL_FALSE, glm::value_ptr(proj));
 
-		vao.draw(6);
+		vao.draw(36);
+		
 		glfwSwapBuffers(win);
 	}
 	glDeleteProgram(shaderProgram);

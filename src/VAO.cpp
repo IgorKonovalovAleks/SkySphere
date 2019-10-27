@@ -17,7 +17,7 @@ void VAO::addVertexBufferObject(const std::vector<GLfloat>& data) {
 	glGenBuffers(1, &vbo);
 	bind();
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * data.size(), data.data(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
 	glEnableVertexAttribArray(0);
@@ -32,7 +32,7 @@ void VAO::addElementBufferObject(const std::vector<GLuint>& data) {
 	glGenBuffers(1, &ebo);
 	bind();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(data), data.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * data.size(), data.data(), GL_STATIC_DRAW);
 	
 	unBind();
 	Ebuffers.push_back(ebo);
@@ -48,5 +48,6 @@ void VAO::draw(GLsizei c) {
 
 VAO::~VAO() {
 	glDeleteBuffers(Vbuffers.size(), Vbuffers.data());
+	glDeleteBuffers(Ebuffers.size(), Ebuffers.data());
 	glDeleteVertexArrays(1, &mVao);
 }
