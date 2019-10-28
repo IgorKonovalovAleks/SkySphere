@@ -127,10 +127,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\VAO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="libs\include\glm\glm.hpp" />
     <ClInclude Include="src\VAO.h" />
   </ItemGroup>

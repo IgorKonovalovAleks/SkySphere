@@ -3,9 +3,11 @@
   <ItemGroup>
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\VAO.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\VAO.h" />
     <ClInclude Include="libs\include\glm\glm.hpp" />
+    <ClInclude Include="src\Camera.h" />
   </ItemGroup>
 </Project>

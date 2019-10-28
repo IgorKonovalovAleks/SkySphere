@@ -1,18 +1,22 @@
 #include <iostream>
-#include <GL/glew.h>
-#include <GL/GL.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "Camera.h"
 #include "VAO.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
+bool keys[1024];
+
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
+	if (action == GLFW_PRESS) {
+		keys[key] = true;
+	}
+	else if (action == GLFW_RELEASE) {
+		keys[key] = false;
+	}
+}
 
 int main() {
-
-	
 
 	if (!glfwInit()) {
 		std::cout << "GLFW INIT ERROR" << std::endl;
@@ -21,6 +25,7 @@ int main() {
 	GLFWwindow* win = glfwCreateWindow(WIDTH, HEIGHT, "Engine", nullptr, nullptr);
 	glfwMakeContextCurrent(win);
 	glewExperimental = true;
+	glfwSetKeyCallback(win, key_callback);
 	if (glewInit() != GLEW_OK) {
 		std::cout << "GLEW INIT ERROR" << std::endl;
 		return -1;
@@ -141,8 +146,9 @@ int main() {
 	glm::mat4 view;
 	glm::mat4 proj;
 
+	Camera camera;
+
 	
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 	
 	model = glm::translate(model, glm::vec3(-0.7f, 0.2f, 0.0f));
@@ -153,10 +159,12 @@ int main() {
 	while (!glfwWindowShouldClose(win)) {
 
 		glfwPollEvents();
+		camera.move(keys[GLFW_KEY_W], keys[GLFW_KEY_S], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
 
 		glClearColor(1, 1, 1, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
+		view = camera.getViewMatrix();
 		time = glfwGetTime();
 		colR = sin(time) / 4 + 0.25;
 		colG = sin(time + 90) / 4 + 0.25;
