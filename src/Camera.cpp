@@ -10,12 +10,19 @@ glm::mat4 Camera::getViewMatrix() {
 	return glm::lookAt(position, position + front, vecUp);
 }
 
-void Camera::move(bool up, bool down, bool left, bool right) {
-	if (up and !down) {
+void Camera::move(bool forward, bool backward, bool up, bool down, bool left, bool right) {
+	if (forward and !backward) {
 		position += front * speed;
 	}
-	else if (down) {
+	else if (backward) {
 		position -= front * speed;
+	}
+
+	if (up and !down) {
+		position += vecUp * speed;
+	}
+	else if (down) {
+		position -= vecUp * speed;
 	}
 
 	if (right and !left) {

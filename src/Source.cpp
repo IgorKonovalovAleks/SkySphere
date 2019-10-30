@@ -6,7 +6,6 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 bool keys[1024];
 
-
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (action == GLFW_PRESS) {
 		keys[key] = true;
@@ -108,6 +107,7 @@ int main() {
 	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,
 	-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.0f
 	};
+
 	std::vector<GLuint> indices = {  
 		0, 3, 4,
 		3, 4, 7,
@@ -147,7 +147,6 @@ int main() {
 	glm::mat4 proj;
 
 	Camera camera;
-
 	
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 	
@@ -159,7 +158,8 @@ int main() {
 	while (!glfwWindowShouldClose(win)) {
 
 		glfwPollEvents();
-		camera.move(keys[GLFW_KEY_W], keys[GLFW_KEY_S], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
+		camera.move(keys[GLFW_KEY_W], keys[GLFW_KEY_S], keys[GLFW_KEY_LEFT_SHIFT],
+			keys[GLFW_KEY_LEFT_CONTROL], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
 
 		glClearColor(1, 1, 1, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -16,6 +16,6 @@ private:
 public:
 	Camera();
 	glm::mat4 getViewMatrix();
-	void move(bool up, bool down, bool left, bool right);
+	void move(bool forward, bool backward, bool up, bool down, bool left, bool right);
 };
 
