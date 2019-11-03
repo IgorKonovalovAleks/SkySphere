@@ -1,6 +1,8 @@
 #include <iostream>
-#include "Camera.h"
 #include "VAO.h"
+#include <GL/GL.h>
+#include "Shader.h"
+#include "Camera.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -21,6 +23,9 @@ int main() {
 		std::cout << "GLFW INIT ERROR" << std::endl;
 		return -1;
 	}
+
+	SphereCalculator calc;
+
 	GLFWwindow* win = glfwCreateWindow(WIDTH, HEIGHT, "Engine", nullptr, nullptr);
 	glfwMakeContextCurrent(win);
 	glewExperimental = true;
@@ -56,56 +61,28 @@ int main() {
 		"  frag_color = color + mColor;"
 		"}";
 
-	GLuint vertShader;
-	GLuint fragShader;
-	vertShader = glCreateShader(GL_VERTEX_SHADER);
-	fragShader = glCreateShader(GL_FRAGMENT_SHADER);
+	const char* light_shader =
+		"#version 330 core\n"
+		"out vec4 frag_color;"
+		"void main() {"
+		"  frag_color = vec4(1.0, 1.0, 1.0, 1.0);"
+		"}";
 
-	glShaderSource(vertShader, 1, &vertex_shader, NULL);
-	glCompileShader(vertShader);
-	GLint success;
-	GLchar infoLog[512];
-	glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	glShaderSource(fragShader, 1, &fragment_shader, NULL);
-	glCompileShader(fragShader);
-	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	GLuint shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertShader);
-	glAttachShader(shaderProgram, fragShader);
-	glLinkProgram(shaderProgram);
-
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if(!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::COMPILE::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	glDeleteShader(vertShader);
-	glDeleteShader(fragShader);
+	Shader shaderProgram(vertex_shader, fragment_shader), 
+		lightShaderProgram(vertex_shader, light_shader);
 
 
 	std::vector<GLfloat> vertices = {
-	 0.5f,  0.5f, 0.5f, 0.5f, 0.0f, 0.0f, //up-right
-	 0.5f, -0.5f, 0.5f, 0.0f, 0.5f, 0.0f, //down-right
-	-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, //down-left
-	-0.5f,  0.5f, 0.5f,  0.5f, 0.5f, 0.0f, //up-left
+	//forward
+	 0.5f,  0.5f,  0.5f, 0.5f, 0.0f, 0.0f, /*up-right*/    
+	 0.5f, -0.5f,  0.5f, 0.0f, 0.5f, 0.0f, /*down-right*/ 
+	-0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.5f, /*down-left*/  
+	-0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f, /*up-left*/    
+	//backward
 	 0.5f,  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
 	 0.5f, -0.5f, -0.5f, 0.0f, 0.5f, 0.0f,
 	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,
-	-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.0f
+	-0.5f,  0.5f, -0.5f, 0.5f, 0.5f, 0.0f
 	};
 
 	std::vector<GLuint> indices = {  
@@ -124,8 +101,13 @@ int main() {
 	};
 
 	VAO vao;
-	vao.addVertexBufferObject(vertices);
+	vao.addVertexBufferObject(vertices, { 3, 3 }, 6, { 0, 3 });
 	vao.addElementBufferObject(indices);
+	glBindVertexArray(0);
+
+	VAO light;
+	light.addVertexBufferObject(vertices, { 3 }, 6, { 0 });
+	light.addElementBufferObject(indices);
 	glBindVertexArray(0);
 
 	GLfloat time;
@@ -137,31 +119,41 @@ int main() {
 	GLuint view_position;
 	GLuint proj_position;
 
-	model_position = glGetUniformLocation(shaderProgram, "model");
-	view_position = glGetUniformLocation(shaderProgram, "view");
-	proj_position = glGetUniformLocation(shaderProgram, "proj");
-	form_position = glGetUniformLocation(shaderProgram, "mColor");
+	GLuint light_model_position, light_view_position, light_proj_position;
 
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	model_position = glGetUniformLocation(shaderProgram.getId(), "model");
+	view_position = glGetUniformLocation(shaderProgram.getId(), "view");
+	proj_position = glGetUniformLocation(shaderProgram.getId(), "proj");
+	form_position = glGetUniformLocation(shaderProgram.getId(), "mColor");
 
-	Camera camera;
+	light_model_position = glGetUniformLocation(lightShaderProgram.getId(), "model");
+	light_view_position = glGetUniformLocation(lightShaderProgram.getId(), "view");
+	light_proj_position = glGetUniformLocation(lightShaderProgram.getId(), "proj");
+
+	glm::mat4 model, view, proj;
+	glm::mat4 light_model;
+
+	//transform order: translate, rotate, scale
+
+	Camera camera(6.0f, 0.01f);
 	
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
-	
+
 	model = glm::translate(model, glm::vec3(-0.7f, 0.2f, 0.0f));
 	model = glm::rotate(model, 30.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+
+	light_model = glm::translate(light_model, glm::vec3(2.5f, 3.0f, 1.0f));
+	light_model = glm::scale(light_model, glm::vec3(0.3f, 0.3f, 0.3f));
 	
 	glEnable(GL_DEPTH_TEST);
 
 	while (!glfwWindowShouldClose(win)) {
 
 		glfwPollEvents();
-		camera.move(keys[GLFW_KEY_W], keys[GLFW_KEY_S], keys[GLFW_KEY_LEFT_SHIFT],
-			keys[GLFW_KEY_LEFT_CONTROL], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
+		camera.move(keys[GLFW_KEY_LEFT_CONTROL], keys[GLFW_KEY_LEFT_SHIFT], keys[GLFW_KEY_S],
+			keys[GLFW_KEY_W], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
 
-		glClearColor(1, 1, 1, 1);
+		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		view = camera.getViewMatrix();
@@ -169,9 +161,9 @@ int main() {
 		colR = sin(time) / 4 + 0.25;
 		colG = sin(time + 90) / 4 + 0.25;
 		colB = sin(time - 90) / 4 + 0.25;
-		model = glm::rotate(model, (GLfloat)time * 0.1f, glm::vec3(0.5f, 1.0f, 0.0f));
+		model = glm::rotate(model, sqrt(sqrt((GLfloat)time)) * 0.1f, glm::vec3(0.5f, 1.0f, 0.0f));
 		
-		glUseProgram(shaderProgram);
+		glUseProgram(shaderProgram.getId());
 
 		glUniform4f(form_position, colR, colG, colB, 1.0f);
 		
@@ -180,10 +172,18 @@ int main() {
 		glUniformMatrix4fv(proj_position, 1, GL_FALSE, glm::value_ptr(proj));
 
 		vao.draw(36);
+
+		glUseProgram(lightShaderProgram.getId());
+
+		glUniformMatrix4fv(light_model_position, 1, GL_FALSE, glm::value_ptr(light_model));
+		glUniformMatrix4fv(light_view_position, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(light_proj_position, 1, GL_FALSE, glm::value_ptr(proj));
+
+		light.draw(36);
 		
 		glfwSwapBuffers(win);
 	}
-	glDeleteProgram(shaderProgram);
+
 	glfwDestroyWindow(win);
 	glfwTerminate();
 	return 0;

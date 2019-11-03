@@ -12,17 +12,21 @@ void VAO::unBind() {
 	glBindVertexArray(0);
 }
 
-void VAO::addVertexBufferObject(const std::vector<GLfloat>& data) {
+void VAO::addVertexBufferObject(const std::vector<GLfloat>& data, const std::vector <GLint>& counts,
+	GLint len, const std::vector<GLint>& intendations) {
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	bind();
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * data.size(), data.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3* sizeof(GLfloat)));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
+	
+	for (int i = 0; i < counts.size(); i++) {
+		glVertexAttribPointer(i, counts[i], GL_FLOAT, GL_FALSE, len * sizeof(GLfloat), (GLvoid*)(intendations[i] * sizeof(GLfloat)));
+	}
+	for (int i = 0; i < counts.size(); i++) {
+		glEnableVertexAttribArray(i);
+	}
+	
 	unBind();
 	Vbuffers.push_back(vbo);
 }

@@ -1,9 +1,8 @@
-#include <GL/glew.h>
-#include <GL/GL.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "SphereCalculator.h"
 #pragma once
 class Camera
 {
@@ -12,9 +11,9 @@ private:
 	glm::vec3 position;
 	glm::vec3 front;
 	GLfloat speed;
-
+	SphereCalculator calc;
 public:
-	Camera();
+	Camera(GLfloat z, float s);
 	glm::mat4 getViewMatrix();
 	void move(bool forward, bool backward, bool up, bool down, bool left, bool right);
 };

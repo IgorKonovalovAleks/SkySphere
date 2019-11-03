@@ -4,10 +4,14 @@
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\VAO.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\SphereCalculator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\VAO.h" />
     <ClInclude Include="libs\include\glm\glm.hpp" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\SphereCalculator.h" />
   </ItemGroup>
 </Project>

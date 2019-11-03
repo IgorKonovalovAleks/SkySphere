@@ -127,11 +127,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\SphereCalculator.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Source.cpp" />
     <ClCompile Include="src\VAO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\SphereCalculator.h" />
+    <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="libs\include\glm\glm.hpp" />
     <ClInclude Include="src\VAO.h" />
