@@ -42,12 +42,18 @@ void VAO::addElementBufferObject(const std::vector<GLuint>& data) {
 	Ebuffers.push_back(ebo);
 }
 
-void VAO::draw(GLsizei c) {
+void VAO::drawEl(GLsizei c) {
 	bind();
 	glDrawElements(GL_TRIANGLES, c, GL_UNSIGNED_INT, 0);
 
 	unBind();
 
+}
+
+void VAO::drawVx(GLsizei c) {
+	bind();
+	glDrawArrays(GL_TRIANGLES, 0, c);
+	unBind();
 }
 
 VAO::~VAO() {

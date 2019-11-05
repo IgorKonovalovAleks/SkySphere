@@ -18,7 +18,8 @@ public:
 	void addVertexBufferObject(const std::vector<GLfloat>& data, const std::vector<GLint>& counts,
 		GLint len, const std::vector<GLint>& intendations);
 	void addElementBufferObject(const std::vector<GLuint>& data);
-	void draw(GLsizei c);
+	void drawEl(GLsizei c);
+	void drawVx(GLsizei c);
 	~VAO();
 
 };
