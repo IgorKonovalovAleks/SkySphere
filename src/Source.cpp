@@ -54,7 +54,7 @@ int main() {
 		"  gl_Position = proj * view * model * vec4(position, 1.0);"
 		"  fragment_position = model * vec4(position, 1.0);"
 		"  color = ourColor;"
-		"  normal = Normal;"
+		"  normal = (model * vec4(Normal, 1.0)).xyz;"
 		"}";
 
 	const char* fragment_shader = 
@@ -242,7 +242,7 @@ int main() {
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
 	model = glm::translate(model, glm::vec3(-0.7f, 0.2f, 0.0f));
-	//model = glm::rotate(model, 30.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, 30.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	light_model = glm::translate(light_model, light_position);
 	light_model = glm::scale(light_model, glm::vec3(0.2f, 0.2f, 0.2f));
@@ -257,13 +257,14 @@ int main() {
 
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		
 		view = camera.getViewMatrix();
 		time = glfwGetTime();
 		colR = sin(time) / 4 + 0.25;
 		colG = sin(time + 90) / 4 + 0.25;
 		colB = sin(time - 90) / 4 + 0.25;
-		//model = glm::rotate(model, sqrt(sqrt((GLfloat)time)) * 0.1f, glm::vec3(0.5f, 1.0f, 0.0f));
+		model = glm::rotate(model, sqrt(sqrt((GLfloat)time)) * 0.1f, glm::vec3(0.5f, 0.0f, 0.0f));
 		
 		glUseProgram(shaderProgram.getId());
 
