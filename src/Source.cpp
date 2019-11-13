@@ -8,12 +8,47 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 bool keys[1024];
 
+SphereCalculator calc;
+std::vector<GLfloat> sphere_buffer;
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
 	if (action == GLFW_PRESS) {
 		keys[key] = true;
 	}
 	else if (action == GLFW_RELEASE) {
 		keys[key] = false;
+	}
+}
+
+void initSphere() {
+	calc.setRadius(2.0f);
+	glm::vec3 pos;
+	for (int hangle = 0; hangle < 20; hangle++) {
+		for (int vangle = 0; vangle < 20; vangle++) {
+			std::cout << calc.getX() << " " << calc.getY() << " " << calc.getZ() << std::endl;
+			
+			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
+			sphere_buffer.push_back(pos.x);
+			sphere_buffer.push_back(pos.y);
+			sphere_buffer.push_back(pos.z);
+			sphere_buffer.push_back(glm::normalize(pos).x);
+			sphere_buffer.push_back(glm::normalize(pos).y);
+			sphere_buffer.push_back(glm::normalize(pos).z);
+			calc.changeHorizontal(18.0f);
+			std::cout << glm::length(pos) << std::endl;
+			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
+			sphere_buffer.push_back(pos.x);
+			sphere_buffer.push_back(pos.y);
+			sphere_buffer.push_back(pos.z);
+			sphere_buffer.push_back(glm::normalize(pos).x);
+			sphere_buffer.push_back(glm::normalize(pos).y);
+			sphere_buffer.push_back(glm::normalize(pos).z);
+			calc.changeHorizontal(-18.0f);
+			calc.changeVetrical(18.0f);
+			
+		}
+
+		calc.changeHorizontal(18.0f);
 	}
 }
 
@@ -24,7 +59,7 @@ int main() {
 		return -1;
 	}
 
-	SphereCalculator calc;
+	initSphere();
 
 	GLFWwindow* win = glfwCreateWindow(WIDTH, HEIGHT, "Engine", nullptr, nullptr);
 	glfwMakeContextCurrent(win);
@@ -82,7 +117,7 @@ int main() {
 		"  if (res.z > 1.0) {"
 		"    res.z = 1.0;"
 		"  }"
-		"  frag_color = vec4(res, 0.0);"
+		"  frag_color = vec4(res, 1.0);"
 		"}";
 
 	const char* light_shader =
@@ -90,22 +125,59 @@ int main() {
 		"out vec4 frag_color;"
 		"uniform vec3 light_color;"
 		"void main() {"
-		"  frag_color = vec4(light_color, 0.0);"
+		"  frag_color = vec4(light_color, 1.0);"
 		"}";
 
 	const char* sphere_vertex =
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 position;"
+		"layout (location = 1) in vec3 Normal;"
+		"out vec3 normal;"
+		"out vec4 fragment_position;"
+		"uniform mat4 model;"
+		"uniform mat4 view;"
+		"uniform mat4 proj;"
 		"void main() {"
-		"  "
+		"  gl_Position = proj * view * model * vec4(position, 1.0);"
+		"  fragment_position = model * vec4(position, 1.0);"
+		"  normal = normalize((model * vec4(Normal, 0.0)).xyz);"
 		"}";
 
-	Shader shaderProgram(vertex_shader, fragment_shader, "model", "view", "proj"), 
-		lightShaderProgram(vertex_shader, light_shader, "model", "view", "proj");
+	const char* sphere_fragment =
+		"#version 330 core\n"
+		"in vec3 normal;"
+		"in vec4 fragment_position;"
+		"out vec4 frag_color;"
+		"uniform vec3 Slight_color;"
+		"uniform vec3 Slight_position;"
+		"void main() {"
+		"  float ambient_strengh = 0.1;"
+		"  vec3 ambient_color = ambient_strengh * Slight_color;"
+		"  vec3 light_direction = normalize(Slight_position - fragment_position.xyz);"
+		"  vec3 diffuse = max(dot(normal, light_direction), 0.0) * Slight_color;"
+		"  vec3 res = (ambient_color + diffuse) * vec3(1.0, 1.0, 1.0);"
+		"  if (res.x > 1.0) {"
+		"    res.x = 1.0;"
+		"  }"
+		"  if (res.y > 1.0) {"
+		"    res.y = 1.0;"
+		"  }"
+		"  if (res.z > 1.0) {"
+		"    res.z = 1.0;"
+		"  }"
+		"  frag_color = vec4(1.0);"
+		"}";
+
+	Shader shaderProgram(vertex_shader, fragment_shader, "model", "view", "proj"),
+		lightShaderProgram(vertex_shader, light_shader, "model", "view", "proj"),
+		sphereShaderProgram(sphere_vertex, sphere_fragment, "model", "view", "proj");
 
 
 	shaderProgram.addOptionalUniform("light_position"); 
 	shaderProgram.addOptionalUniform("light_color");
+
+	sphereShaderProgram.addOptionalUniform("Slight_position");
+	sphereShaderProgram.addOptionalUniform("Slight_color");
 
 	lightShaderProgram.addOptionalUniform("light_color");
 
@@ -223,6 +295,10 @@ int main() {
 	light.addElementBufferObject(indices);
 	glBindVertexArray(0);
 
+	VAO sphere;
+	sphere.addVertexBufferObject(sphere_buffer, { 3, 3 }, 6, { 0, 3 });
+	glBindVertexArray(0);
+
 	GLfloat time;
 	GLfloat colR;
 	GLfloat colG;
@@ -249,6 +325,7 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 	//glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
+	glm::mat4 empty;
 
 	while (!glfwWindowShouldClose(win)) {
 
@@ -271,14 +348,16 @@ int main() {
 		colR = sin(time) / 4 + 0.25;
 		colG = sin(time + 90) / 4 + 0.25;
 		colB = sin(time - 90) / 4 + 0.25;
-		//model = glm::rotate(model, sqrt(sqrt((GLfloat)time)) * 0.1f, glm::vec3(0.5f, 0.0f, 0.0f));
 		
-		shaderProgram.use(model, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
-		vao.drawVx(36);
+		//shaderProgram.use(model, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
+		//vao.drawVx(36);
 
 		lightShaderProgram.use(light_model, view, proj, std::vector<glm::vec3> {glm::vec3(1.0f, 1.0f, 1.0f)});
 		light.drawEl(36);
-		
+
+		sphereShaderProgram.use(empty, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
+		sphere.drawVxStrip((GLsizei) ((float)sphere_buffer.size() / 6));
+
 		glfwSwapBuffers(win);
 	}
 

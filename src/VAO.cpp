@@ -56,6 +56,13 @@ void VAO::drawVx(GLsizei c) {
 	unBind();
 }
 
+void VAO::drawVxStrip(GLsizei c)
+{
+	bind();
+	glDrawArrays(GL_POINTS, 0, c);
+	unBind();
+}
+
 VAO::~VAO() {
 	glDeleteBuffers(Vbuffers.size(), Vbuffers.data());
 	glDeleteBuffers(Ebuffers.size(), Ebuffers.data());
