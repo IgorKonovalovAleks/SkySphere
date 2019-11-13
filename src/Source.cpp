@@ -54,7 +54,7 @@ int main() {
 		"  gl_Position = proj * view * model * vec4(position, 1.0);"
 		"  fragment_position = model * vec4(position, 1.0);"
 		"  color = ourColor;"
-		"  normal = (model * vec4(Normal, 1.0)).xyz;"
+		"  normal = normalize((model * vec4(Normal, 0.0)).xyz);"
 		"}";
 
 	const char* fragment_shader = 
@@ -66,13 +66,23 @@ int main() {
 		"uniform vec3 light_color;"
 		"uniform vec3 light_position;"
 		"void main() {"
+		"  float light_radius = 50.0;"
+		"  float far_comp = sqrt(max((light_radius - length(fragment_position.xyz - light_position)) / light_radius, 0.0));"
 		"  float ambient_strengh = 0.1;"
 		"  vec3 ambient_color = ambient_strengh * light_color;"
-		"  vec3 norm = normalize(normal);"
 		"  vec3 light_direction = normalize(light_position - fragment_position.xyz);"
-		"  vec3 diffuse = max(dot(normal, light_direction), 0.0) * light_color;"
+		"  vec3 diffuse = max(dot(normal, light_direction), 0.0) * far_comp * light_color;"
 		"  vec3 res = (ambient_color + diffuse) * color;"
-		"  frag_color = vec4(res, 1.0);"
+		"  if (res.x > 1.0) {"
+		"    res.x = 1.0;"
+		"  }"
+		"  if (res.y > 1.0) {"
+		"    res.y = 1.0;"
+		"  }"
+		"  if (res.z > 1.0) {"
+		"    res.z = 1.0;"
+		"  }"
+		"  frag_color = vec4(res, 0.0);"
 		"}";
 
 	const char* light_shader =
@@ -80,12 +90,24 @@ int main() {
 		"out vec4 frag_color;"
 		"uniform vec3 light_color;"
 		"void main() {"
-		"  frag_color = vec4(light_color, 1.0);"
+		"  frag_color = vec4(light_color, 0.0);"
 		"}";
 
-	Shader shaderProgram(vertex_shader, fragment_shader), 
-		lightShaderProgram(vertex_shader, light_shader);
+	const char* sphere_vertex =
+		"#version 330 core\n"
+		"layout (location = 0) in vec3 position;"
+		"void main() {"
+		"  "
+		"}";
 
+	Shader shaderProgram(vertex_shader, fragment_shader, "model", "view", "proj"), 
+		lightShaderProgram(vertex_shader, light_shader, "model", "view", "proj");
+
+
+	shaderProgram.addOptionalUniform("light_position"); 
+	shaderProgram.addOptionalUniform("light_color");
+
+	lightShaderProgram.addOptionalUniform("light_color");
 
 	std::vector<GLfloat> vertices = {
 	//forward
@@ -129,8 +151,6 @@ int main() {
 		vert2 = glm::vec3(vertices[indices[i + 1] * 6], vertices[indices[i + 1] * 6 + 1], vertices[indices[i + 1] * 6 + 2]);
 
 		vert3 = glm::vec3(vertices[indices[i + 2] * 6], vertices[indices[i + 2] * 6 + 1], vertices[indices[i + 2] * 6 + 2]);
-
-		//TODO: check normales (vector sum with vertex vector)
 
 		glm::vec3 norm1 = glm::normalize(glm::cross((vert3 - vert1), (vert2 - vert1)));
 		if (glm::length(vert1 + norm1) < glm::length(vert1 - norm1)) {
@@ -207,28 +227,6 @@ int main() {
 	GLfloat colR;
 	GLfloat colG;
 	GLfloat colB;
-	//GLint form_position;
-	GLuint model_position; 
-	GLuint view_position;
-	GLuint proj_position;
-	GLuint light_color_position;
-	GLuint light_position_position;
-
-	GLuint light_color_object_position;
-	GLuint light_model_position, light_view_position, light_proj_position;
-
-	model_position = glGetUniformLocation(shaderProgram.getId(), "model");
-	light_position_position = glGetUniformLocation(shaderProgram.getId(), "light_position");
-	view_position = glGetUniformLocation(shaderProgram.getId(), "view");
-	proj_position = glGetUniformLocation(shaderProgram.getId(), "proj");
-	//form_position = glGetUniformLocation(shaderProgram.getId(), "mColor");
-	light_color_position = glGetUniformLocation(shaderProgram.getId(), "light_color");
-
-	light_color_object_position = glGetUniformLocation(lightShaderProgram.getId(), "light_color");
-	light_model_position = glGetUniformLocation(lightShaderProgram.getId(), "model");
-	light_view_position = glGetUniformLocation(lightShaderProgram.getId(), "view");
-	light_proj_position = glGetUniformLocation(lightShaderProgram.getId(), "proj");
-
 	
 
 	glm::mat4 model, view, proj;
@@ -246,8 +244,11 @@ int main() {
 
 	light_model = glm::translate(light_model, light_position);
 	light_model = glm::scale(light_model, glm::vec3(0.2f, 0.2f, 0.2f));
+	std::cout << glm::length(light_position - glm::vec3(-0.7f, 0.2f, 0.0f)) << std::endl;
 	
 	glEnable(GL_DEPTH_TEST);
+	//glDepthMask(GL_FALSE);
+	glEnable(GL_BLEND);
 
 	while (!glfwWindowShouldClose(win)) {
 
@@ -258,33 +259,24 @@ int main() {
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		
+		if (keys[GLFW_KEY_T]) {
+			model = glm::translate(model, glm::vec3(0.01f, 0.01f, 0.0f));
+		}
+		else if (keys[GLFW_KEY_G]) {
+			model = glm::translate(model, glm::vec3(-0.01f, -0.01f, 0.0f));
+		}
+
 		view = camera.getViewMatrix();
 		time = glfwGetTime();
 		colR = sin(time) / 4 + 0.25;
 		colG = sin(time + 90) / 4 + 0.25;
 		colB = sin(time - 90) / 4 + 0.25;
-		model = glm::rotate(model, sqrt(sqrt((GLfloat)time)) * 0.1f, glm::vec3(0.5f, 0.0f, 0.0f));
+		//model = glm::rotate(model, sqrt(sqrt((GLfloat)time)) * 0.1f, glm::vec3(0.5f, 0.0f, 0.0f));
 		
-		glUseProgram(shaderProgram.getId());
-
-		//glUniform4f(form_position, colR, colG, colB, 1.0f);
-		
-		glUniformMatrix4fv(model_position, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(view_position, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(proj_position, 1, GL_FALSE, glm::value_ptr(proj));
-		glUniform3f(light_position_position, light_position.x, light_position.y, light_position.z);
-		glUniform3f(light_color_position, 1.0f, 1.0f, 1.0f);
-
+		shaderProgram.use(model, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
 		vao.drawVx(36);
 
-		glUseProgram(lightShaderProgram.getId());
-
-		glUniform3f(light_color_object_position, 1.0f, 1.0f, 1.0f);
-		glUniformMatrix4fv(light_model_position, 1, GL_FALSE, glm::value_ptr(light_model));
-		glUniformMatrix4fv(light_view_position, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(light_proj_position, 1, GL_FALSE, glm::value_ptr(proj));
-
+		lightShaderProgram.use(light_model, view, proj, std::vector<glm::vec3> {glm::vec3(1.0f, 1.0f, 1.0f)});
 		light.drawEl(36);
 		
 		glfwSwapBuffers(win);
