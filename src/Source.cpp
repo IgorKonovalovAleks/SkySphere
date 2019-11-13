@@ -23,10 +23,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void initSphere() {
 	calc.setRadius(2.0f);
 	glm::vec3 pos;
-	for (int hangle = 0; hangle < 20; hangle++) {
-		for (int vangle = 0; vangle < 20; vangle++) {
+	for (int hangle = 0; hangle < 40; hangle++) {
+		for (int vangle = 0; vangle < 40; vangle++) {
 			std::cout << calc.getX() << " " << calc.getY() << " " << calc.getZ() << std::endl;
 			
+			sphere_buffer.push_back(pos.x);
+			sphere_buffer.push_back(pos.y);
+			sphere_buffer.push_back(pos.z);
+			sphere_buffer.push_back(glm::normalize(pos).x);
+			sphere_buffer.push_back(glm::normalize(pos).y);
+			sphere_buffer.push_back(glm::normalize(pos).z);
+			calc.changeHorizontal(9.0f);
+
 			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
 			sphere_buffer.push_back(pos.x);
 			sphere_buffer.push_back(pos.y);
@@ -34,21 +42,12 @@ void initSphere() {
 			sphere_buffer.push_back(glm::normalize(pos).x);
 			sphere_buffer.push_back(glm::normalize(pos).y);
 			sphere_buffer.push_back(glm::normalize(pos).z);
-			calc.changeHorizontal(18.0f);
-			std::cout << glm::length(pos) << std::endl;
-			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
-			sphere_buffer.push_back(pos.x);
-			sphere_buffer.push_back(pos.y);
-			sphere_buffer.push_back(pos.z);
-			sphere_buffer.push_back(glm::normalize(pos).x);
-			sphere_buffer.push_back(glm::normalize(pos).y);
-			sphere_buffer.push_back(glm::normalize(pos).z);
-			calc.changeHorizontal(-18.0f);
-			calc.changeVetrical(18.0f);
+			calc.changeHorizontal(-9.0f);
+			calc.changeVetrical(9.0f);
 			
 		}
 
-		calc.changeHorizontal(18.0f);
+		calc.changeHorizontal(9.0f);
 	}
 }
 
@@ -165,7 +164,7 @@ int main() {
 		"  if (res.z > 1.0) {"
 		"    res.z = 1.0;"
 		"  }"
-		"  frag_color = vec4(1.0);"
+		"  frag_color = vec4(res, 1.0);"
 		"}";
 
 	Shader shaderProgram(vertex_shader, fragment_shader, "model", "view", "proj"),
