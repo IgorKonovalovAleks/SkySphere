@@ -1,8 +1,9 @@
 #include <iostream>
 #include "VAO.h"
 #include <GL/GL.h>
-#include "Shader.h"
+#include "SphereElements.h"
 #include "Camera.h"
+
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -21,33 +22,36 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void initSphere() {
-	calc.setRadius(2.0f);
+	calc.setRadius(1.0f);
 	glm::vec3 pos;
 	for (int hangle = 0; hangle < 40; hangle++) {
 		for (int vangle = 0; vangle < 40; vangle++) {
-			std::cout << calc.getX() << " " << calc.getY() << " " << calc.getZ() << std::endl;
-			
+			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
 			sphere_buffer.push_back(pos.x);
 			sphere_buffer.push_back(pos.y);
 			sphere_buffer.push_back(pos.z);
-			sphere_buffer.push_back(glm::normalize(pos).x);
-			sphere_buffer.push_back(glm::normalize(pos).y);
-			sphere_buffer.push_back(glm::normalize(pos).z);
-			calc.changeHorizontal(9.0f);
+			calc.changeHorizontal(glm::radians(9.0f));
 
 			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
 			sphere_buffer.push_back(pos.x);
 			sphere_buffer.push_back(pos.y);
 			sphere_buffer.push_back(pos.z);
-			sphere_buffer.push_back(glm::normalize(pos).x);
-			sphere_buffer.push_back(glm::normalize(pos).y);
-			sphere_buffer.push_back(glm::normalize(pos).z);
-			calc.changeHorizontal(-9.0f);
-			calc.changeVetrical(9.0f);
-			
+			calc.changeVetrical(glm::radians(9.0f));
+
+			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
+			sphere_buffer.push_back(pos.x);
+			sphere_buffer.push_back(pos.y);
+			sphere_buffer.push_back(pos.z);
+
+			calc.changeHorizontal(-glm::radians(9.0f));
+			pos = glm::vec3(calc.getX(), calc.getY(), calc.getZ());
+			sphere_buffer.push_back(pos.x);
+			sphere_buffer.push_back(pos.y);
+			sphere_buffer.push_back(pos.z);
+
 		}
 
-		calc.changeHorizontal(9.0f);
+		calc.changeHorizontal(glm::radians(9.0f));
 	}
 }
 
@@ -72,6 +76,118 @@ int main() {
 	glfwGetFramebufferSize(win, &width, &height);
 
 	glViewport(0, 0, width, height);
+
+	const char* vertex =
+		"#version 330 core\n"
+		"layout (location = 0) in vec3 sph_coords;"
+		"layout (location = 1) in vec3 col;"
+
+		"out VS_OUT{"
+		"  vec3 sphere_coords;"
+		"  mat4 model;"
+		"  mat4 view;"
+		"  mat4 proj;"
+		"  vec3 color;"
+		"  vec4 frag_pos;"
+		"} vs_out;"
+
+		"uniform mat4 model;"
+		"uniform mat4 view;"
+		"uniform mat4 proj;"
+
+		"void main() {"
+		"  vs_out.sphere_coords = sph_coords;"
+		"  vs_out.color = col;"
+		"  gl_Position = proj * view * model * vec4(0.0, 0.0, 0.0, 1.0);"
+		"  vs_out.frag_pos = model * vec4(0.0, 0.0, 0.0, 1.0);"
+		"  vs_out.model = model;"
+		"  vs_out.view = view;"
+		"  vs_out.proj = proj;"
+		"}";
+
+	const char* geo =
+		"#version 330 core\n"
+		"layout (points) in;"
+		"layout (line_strip, max_vertices = 81) out;"
+
+		"in VS_OUT {"
+		"  vec3 sphere_coords;"
+		"  mat4 model;"
+		"  mat4 view;"
+		"  mat4 proj;"
+		"  vec3 color;"
+		"  vec4 frag_pos;"
+		"} gs_in[];"
+
+		"out vec3 color;"
+		"out vec4 fragment_position;"
+
+		"void main() {"
+		"  color = gs_in[0].color;"
+		"  float delta_h = radians(4.5);"
+		"  float ort = gs_in[0].sphere_coords.x;"
+		"  float r = 1.0;"
+		"  float h_angle = 0.0, max_delta = gs_in[0].sphere_coords.z;"
+		"  float a = gs_in[0].sphere_coords.y, d = acos(ort), v_angle = d;"
+		"  for(int i = 0; i < 20; i++) {"
+		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
+		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
+		"    EmitVertex();"
+		"    h_angle += delta_h;"
+		"    v_angle = d + max_delta * sin(h_angle);"
+		"  }"
+		"  for(int i = 0; i < 20; i++) {"
+		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
+		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
+		"    EmitVertex();"
+		"    h_angle += delta_h;"
+		"    v_angle = d + max_delta * sin(h_angle);"
+		"  }"
+		"  for(int i = 0; i < 20; i++) {"
+		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
+		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
+		"    EmitVertex();"
+		"    h_angle += delta_h;"
+		"    v_angle = d + max_delta * sin(h_angle);"
+		"  }"
+		"  for(int i = 0; i < 21; i++) {"
+		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
+		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
+		"    EmitVertex();"
+		"    h_angle += delta_h;"
+		"    v_angle = d + max_delta * sin(h_angle);"
+		"  }"
+		"  EndPrimitive();"
+		"}";
+
+	const char* fragment =
+		"#version 330 core\n"
+		"in vec4 fragment_position;"
+		"in vec3 color;"
+
+		"out vec4 frag_color;"
+		"uniform vec3 light_color;"
+		"uniform vec3 light_position;"
+
+		"void main() {"
+		"  float light_radius = 5.0;"
+		"  float far_comp = sqrt(max((light_radius - length(fragment_position.xyz - light_position)) / light_radius, 0.0));"
+		"  float ambient_strengh = 0.1;"
+		"  vec3 ambient_color = ambient_strengh * light_color;"
+		"  vec3 light_direction = normalize(light_position - fragment_position.xyz);"
+		"  vec3 diffuse = max(dot(normalize(fragment_position.xyz), light_direction), 0.0) * far_comp * light_color;"
+		"  vec3 res = (ambient_color + diffuse) * vec3(1.0, 1.0, 1.0);"
+		"  if (res.x > 1.0) {"
+		"    res.x = 1.0;"
+		"  }"
+		"  if (res.y > 1.0) {"
+		"    res.y = 1.0;"
+		"  }"
+		"  if (res.z > 1.0) {"
+		"    res.z = 1.0;"
+		"  }"
+		"  frag_color = vec4(color, 1.0);"
+		"}";
 
 	const char* vertex_shader = 
 		"#version 330 core\n"
@@ -130,30 +246,44 @@ int main() {
 	const char* sphere_vertex =
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 position;"
-		"layout (location = 1) in vec3 Normal;"
-		"out vec3 normal;"
-		"out vec4 fragment_position;"
+		"out vec4 frg_ps;"
 		"uniform mat4 model;"
 		"uniform mat4 view;"
 		"uniform mat4 proj;"
 		"void main() {"
 		"  gl_Position = proj * view * model * vec4(position, 1.0);"
-		"  fragment_position = model * vec4(position, 1.0);"
-		"  normal = normalize((model * vec4(Normal, 0.0)).xyz);"
+		"  frg_ps = model * vec4(position, 1.0);"
 		"}";
+
+	const char* geometry =
+		"#version 330 core\n"
+		"layout(points) in;"
+		"layout(points, max_vertices = 1) out;"
+		
+		"in vec4 frg_ps[];"
+		"out vec4 fragment_position;"
+
+		"void main() {"
+		"	gl_Position = gl_in[0].gl_Position;"
+		"   fragment_position = frg_ps[0];"
+		"	EmitVertex();"
+		"	EndPrimitive();"
+		"}  ";
 
 	const char* sphere_fragment =
 		"#version 330 core\n"
-		"in vec3 normal;"
 		"in vec4 fragment_position;"
 		"out vec4 frag_color;"
 		"uniform vec3 Slight_color;"
 		"uniform vec3 Slight_position;"
 		"void main() {"
+		"  float light_radius = 5.0;"
+		"  float far_comp = sqrt(max((light_radius - length(fragment_position.xyz - Slight_position)) / light_radius, 0.0));"
 		"  float ambient_strengh = 0.1;"
 		"  vec3 ambient_color = ambient_strengh * Slight_color;"
 		"  vec3 light_direction = normalize(Slight_position - fragment_position.xyz);"
-		"  vec3 diffuse = max(dot(normal, light_direction), 0.0) * Slight_color;"
+		"  vec3 diffuse = max(dot(normalize(fragment_position.xyz), light_direction), 0.0) * far_comp * Slight_color;"
+//		"  vec3 diffuse = far_comp * Slight_color;"
 		"  vec3 res = (ambient_color + diffuse) * vec3(1.0, 1.0, 1.0);"
 		"  if (res.x > 1.0) {"
 		"    res.x = 1.0;"
@@ -164,12 +294,12 @@ int main() {
 		"  if (res.z > 1.0) {"
 		"    res.z = 1.0;"
 		"  }"
-		"  frag_color = vec4(res, 1.0);"
+		"  frag_color = vec4(res, 0.2);"
 		"}";
 
 	Shader shaderProgram(vertex_shader, fragment_shader, "model", "view", "proj"),
 		lightShaderProgram(vertex_shader, light_shader, "model", "view", "proj"),
-		sphereShaderProgram(sphere_vertex, sphere_fragment, "model", "view", "proj");
+		sphereShaderProgram(sphere_vertex, geometry, sphere_fragment, "model", "view", "proj");
 
 
 	shaderProgram.addOptionalUniform("light_position"); 
@@ -182,15 +312,15 @@ int main() {
 
 	std::vector<GLfloat> vertices = {
 	//forward
-	 0.5f,  0.5f,  0.5f, 0.5f, 0.0f, 0.0f, /*up-right*/    
-	 0.5f, -0.5f,  0.5f, 0.0f, 0.5f, 0.0f, /*down-right*/ 
-	-0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 0.5f, /*down-left*/  
-	-0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f, /*up-left*/    
+	 0.3f,  0.3f,  0.3f, 0.3f, 0.0f, 0.0f, /*up-right*/    
+	 0.3f, -0.3f,  0.3f, 0.0f, 0.3f, 0.0f, /*down-right*/ 
+	-0.3f, -0.3f,  0.3f, 0.0f, 0.0f, 0.3f, /*down-left*/  
+	-0.3f,  0.3f,  0.3f, 0.3f, 0.3f, 0.0f, /*up-left*/    
 	//backward
-	 0.5f,  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-	 0.5f, -0.5f, -0.5f, 0.0f, 0.5f, 0.0f,
-	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,
-	-0.5f,  0.5f, -0.5f, 0.5f, 0.5f, 0.0f
+	 0.3f,  0.3f, -0.3f, 0.3f, 0.0f, 0.0f,
+	 0.3f, -0.3f, -0.3f, 0.0f, 0.3f, 0.0f,
+	-0.3f, -0.3f, -0.3f, 0.0f, 0.0f, 0.3f,
+	-0.3f,  0.3f, -0.3f, 0.3f, 0.3f, 0.0f
 	};
 
 	std::vector<GLuint> indices = {  
@@ -210,12 +340,9 @@ int main() {
 
 	std::vector<GLfloat> vertices_buffer;
 	std::vector<glm::vec3> normales;
-	std::cout << indices.size() << std::endl;
-	std::cout << vertices.size() << std::endl;
 
 	//generate normals and add them to vertex array
 	for (int i = 0; i < indices.size() - 2; i += 3) {
-		std::cout << i << std::endl;
 		glm::vec3 vert1, vert2, vert3;
 		vert1 = glm::vec3(vertices[indices[i] * 6], vertices[indices[i] * 6 + 1], vertices[indices[i] * 6 + 2]);
 
@@ -283,7 +410,7 @@ int main() {
 		vertices_buffer.push_back(normales[i + 2].y);
 		vertices_buffer.push_back(normales[i + 2].z);
 	}
-	std::cout << vertices_buffer.size() << std::endl;
+
 	VAO vao;
 	vao.addVertexBufferObject(vertices_buffer, { 3, 3, 3 }, 9, { 0, 3, 6 });
 	//vao.addElementBufferObject(indices);
@@ -295,23 +422,39 @@ int main() {
 	glBindVertexArray(0);
 
 	VAO sphere;
-	sphere.addVertexBufferObject(sphere_buffer, { 3, 3 }, 6, { 0, 3 });
+	sphere.addVertexBufferObject(sphere_buffer, { 3 }, 3, { 0 });
 	glBindVertexArray(0);
 
-	GLfloat time;
-	GLfloat colR;
-	GLfloat colG;
-	GLfloat colB;
-	
+	const std::vector<GLfloat> data =
+		//d, horizontal, vertical, color
+	{ 0.1, 0.0, 0.0, 1.0, 0.0, 0.0,                    //flats
+	 0.3, 0.0, 0.0, 0.0, 1.0, 0.0,
+		 0.5, 0.0, 0.0, 0.0, 1.0, 0.0,
+		0.6, 0.0, glm::radians(45.0f), 0.0, 0.0, 1.0,
+	 0.9, 0.0, glm::radians(23.156f), 1.0, 1.0, 1.0,
+
+	};
+
+	Shader flat_shader(vertex, geo, fragment, "model", "view", "proj");
+	flat_shader.addOptionalUniform("light_position");
+	flat_shader.addOptionalUniform("light_color");
+	VAO sphere_data;
+	sphere_data.addVertexBufferObject(data, { 3, 3 }, 6, { 0, 3 });
+
+	SphereElements sph;
+	glBindVertexArray(0);
 
 	glm::mat4 model, view, proj;
 	glm::mat4 light_model;
-	glm::vec3 light_position = glm::vec3((GLfloat)2.5f, (GLfloat)3.0f, (GLfloat)1.0f);
+	calc.setRadius(3.0f);
+	calc.setHorizontal(90.0f);
+	calc.setVetrical(45.0f);
+	glm::vec3 light_position = glm::vec3((GLfloat)calc.getX(), (GLfloat)calc.getY(), (GLfloat)calc.getZ());
 
 	//transform order: translate, rotate, scale
 
 	Camera camera(6.0f, 0.01f);
-	
+
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
 	model = glm::translate(model, glm::vec3(-0.7f, 0.2f, 0.0f));
@@ -324,40 +467,64 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 	//glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glm::mat4 empty;
+
+	glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);
+
+	GLfloat time;
+	GLfloat colR;
+	GLfloat colG;
+	GLfloat colB;
+	GLfloat delta_time = 1.0 / 60.0;
+	GLfloat cur_delta = 0.0f, last_time = glfwGetTime();
 
 	while (!glfwWindowShouldClose(win)) {
 
-		glfwPollEvents();
-		camera.move(keys[GLFW_KEY_LEFT_CONTROL], keys[GLFW_KEY_LEFT_SHIFT], keys[GLFW_KEY_S],
-			keys[GLFW_KEY_W], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
-
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		if (keys[GLFW_KEY_T]) {
-			model = glm::translate(model, glm::vec3(0.01f, 0.01f, 0.0f));
-		}
-		else if (keys[GLFW_KEY_G]) {
-			model = glm::translate(model, glm::vec3(-0.01f, -0.01f, 0.0f));
-		}
-
-		view = camera.getViewMatrix();
 		time = glfwGetTime();
-		colR = sin(time) / 4 + 0.25;
-		colG = sin(time + 90) / 4 + 0.25;
-		colB = sin(time - 90) / 4 + 0.25;
-		
-		//shaderProgram.use(model, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
-		//vao.drawVx(36);
+		cur_delta += time - last_time;
+		last_time = time;
+		if (cur_delta <= delta_time) {
 
-		lightShaderProgram.use(light_model, view, proj, std::vector<glm::vec3> {glm::vec3(1.0f, 1.0f, 1.0f)});
-		light.drawEl(36);
 
-		sphereShaderProgram.use(empty, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
-		sphere.drawVxStrip((GLsizei) ((float)sphere_buffer.size() / 6));
 
-		glfwSwapBuffers(win);
+			glfwPollEvents();
+			camera.move(keys[GLFW_KEY_LEFT_CONTROL], keys[GLFW_KEY_LEFT_SHIFT], keys[GLFW_KEY_S],
+				keys[GLFW_KEY_W], keys[GLFW_KEY_A], keys[GLFW_KEY_D]);
+
+			glClearColor(0, 0, 0, 1);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			if (keys[GLFW_KEY_T]) {
+				model = glm::translate(model, glm::vec3(0.01f, 0.01f, 0.0f));
+			}
+			else if (keys[GLFW_KEY_G]) {
+				model = glm::translate(model, glm::vec3(-0.01f, -0.01f, 0.0f));
+			}
+
+			view = camera.getViewMatrix();
+			colR = sin(time) / 4 + 0.25;
+			colG = sin(time + 90) / 4 + 0.25;
+			colB = sin(time - 90) / 4 + 0.25;
+
+			//shaderProgram.use(model, view, proj, std::vector<glm::vec3> {light_position, glm::vec3(1.0f, 1.0f, 1.0f)});
+			//vao.drawVx(36);
+
+			lightShaderProgram.use(light_model, view, proj, { glm::vec3(1.0f, 1.0f, 1.0f) });
+			light.drawEl(36);
+
+			sphereShaderProgram.use(empty, view, proj, { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			sphere.drawVx((GLsizei)(sphere_buffer.size() / 3));
+
+			//sph.draw(empty, view, proj, light_position, glm::vec3(1.0f, 1.0f, 1.0f));
+			flat_shader.use(empty, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+
+			sphere_data.drawVxStrip(9, 0);
+
+			glfwSwapBuffers(win);
+		} else
+		cur_delta = 0.0f;
 	}
 
 	glfwDestroyWindow(win);

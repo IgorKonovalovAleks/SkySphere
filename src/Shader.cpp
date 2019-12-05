@@ -1,5 +1,9 @@
 #include "Shader.h"
 
+Shader::Shader()
+{
+}
+
 Shader::Shader(const char* vertex_source, const char* fragment_source)
 {
 	GLuint vertShader, fragShader;
@@ -153,6 +157,7 @@ Shader::Shader(const char* vertex_source, const char* geo_source, const char* fr
 	model = glGetUniformLocation(id, model_name);
 	view = glGetUniformLocation(id, view_name);
 	projection = glGetUniformLocation(id, projection_name);
+	std::cout << model << " " << view << " " << projection << std::endl;
 }
 
 void Shader::use() {

@@ -52,14 +52,14 @@ void VAO::drawEl(GLsizei c) {
 
 void VAO::drawVx(GLsizei c) {
 	bind();
-	glDrawArrays(GL_TRIANGLES, 0, c);
+	glDrawArrays(GL_POINTS, 0, c);
 	unBind();
 }
 
-void VAO::drawVxStrip(GLsizei c)
+void VAO::drawVxStrip(GLsizei c, GLsizei intendation)
 {
 	bind();
-	glDrawArrays(GL_POINTS, 0, c);
+	glDrawArrays(GL_POINTS, intendation, c);
 	unBind();
 }
 

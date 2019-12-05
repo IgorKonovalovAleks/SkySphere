@@ -20,7 +20,7 @@ public:
 	void addElementBufferObject(const std::vector<GLuint>& data);
 	void drawEl(GLsizei c);
 	void drawVx(GLsizei c);
-	void drawVxStrip(GLsizei c);
+	void drawVxStrip(GLsizei c, GLsizei intendation);
 	~VAO();
 
 };

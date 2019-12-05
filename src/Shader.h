@@ -13,6 +13,7 @@ private:
 	GLuint projection;
 	std::vector<GLuint> optional;
 public:
+	Shader();
 	Shader(const char* vertex_source, const char* fragment_source);
 	Shader(const char* vertex_source, const char* fragment_source, const char* model_name, const char* view_name, const char* projection_name);
 	Shader(const char* vertex_source, const char* geo_source, const char* fragment_source, const char* model_name, const char* view_name, const char* projection_name);

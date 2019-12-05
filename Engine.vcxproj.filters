@@ -6,6 +6,7 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\SphereCalculator.cpp" />
+    <ClCompile Include="src\SphereElements.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\VAO.h" />
@@ -13,5 +14,6 @@
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\SphereCalculator.h" />
+    <ClInclude Include="src\SphereElements.h" />
   </ItemGroup>
 </Project>
