@@ -125,38 +125,17 @@ int main() {
 		"void main() {"
 		"  color = gs_in[0].color;"
 		"  float delta_h = radians(4.5);"
-		"  float ort = gs_in[0].sphere_coords.x;"
+		"  float d = gs_in[0].sphere_coords.x;"
 		"  float r = 1.0;"
 		"  float h_angle = 0.0, max_delta = gs_in[0].sphere_coords.z;"
-		"  float a = gs_in[0].sphere_coords.y, d = acos(ort), v_angle = d;"
-		"  for(int i = 0; i < 20; i++) {"
+		"  float a = gs_in[0].sphere_coords.y, v_angle = d;"
+		"  for(int i = 0; i < 81; i++) {"
 		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
 		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
 		"    EmitVertex();"
 		"    h_angle += delta_h;"
-		"    v_angle = d + max_delta * sin(h_angle);"
 		"  }"
-		"  for(int i = 0; i < 20; i++) {"
-		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
-		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
-		"    EmitVertex();"
-		"    h_angle += delta_h;"
-		"    v_angle = d + max_delta * sin(h_angle);"
-		"  }"
-		"  for(int i = 0; i < 20; i++) {"
-		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
-		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
-		"    EmitVertex();"
-		"    h_angle += delta_h;"
-		"    v_angle = d + max_delta * sin(h_angle);"
-		"  }"
-		"  for(int i = 0; i < 21; i++) {"
-		"    fragment_position = vec4(r * cos(v_angle) * sin(h_angle), r * sin(v_angle), r * cos(v_angle) * cos(h_angle), 1.0);"
-		"    gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
-		"    EmitVertex();"
-		"    h_angle += delta_h;"
-		"    v_angle = d + max_delta * sin(h_angle);"
-		"  }"
+		
 		"  EndPrimitive();"
 		"}";
 
@@ -294,7 +273,7 @@ int main() {
 		"  if (res.z > 1.0) {"
 		"    res.z = 1.0;"
 		"  }"
-		"  frag_color = vec4(res, 0.2);"
+		"  frag_color = vec4(1.0);"
 		"}";
 
 	Shader shaderProgram(vertex_shader, fragment_shader, "model", "view", "proj"),
@@ -427,13 +406,22 @@ int main() {
 
 	const std::vector<GLfloat> data =
 		//d, horizontal, vertical, color
-	{ 0.1, 0.0, 0.0, 1.0, 0.0, 0.0,                    //flats
-	 0.3, 0.0, 0.0, 0.0, 1.0, 0.0,
-		 0.5, 0.0, 0.0, 0.0, 1.0, 0.0,
-		0.6, 0.0, glm::radians(45.0f), 0.0, 0.0, 1.0,
-	 0.9, 0.0, glm::radians(23.156f), 1.0, 1.0, 1.0,
+	{ glm::radians(0.0f), 0.0, 0.0, 1.0, 0.0, 0.0,                    //flats
+	  glm::radians(6.78f), 0.0, 0.0, 0.0, 1.0, 0.0,
+	  glm::radians(-34.36f), 0.0, 0.0, 0.0, 0.0, 1.0,
+	  glm::radians(76.426f), 0.0, glm::radians(45.0f), 1.0, 0.0, 1.0,
+	  glm::radians(0.0f), 0.0, glm::radians(23.156f), 1.0, 1.0, 1.0
 
 	};
+
+	glm::mat4 rot_ecl, rot_second, rot_third, rot_fourth, rot_hor;
+	rot_ecl = glm::rotate(rot_ecl, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_ecl, 23.156f, glm::vec3(0.0f, 0.0f, 1.0f));
+	rot_second = glm::rotate(rot_second, 10.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_second, 30.986f, glm::vec3(0.0f, 0.0f, 1.0f));
+	rot_third = glm::rotate(rot_third, -10.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_third, -78.62f, glm::vec3(0.0f, 0.0f, 1.0f));
+	rot_fourth = glm::rotate(rot_fourth, 90.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_fourth, 33.33f, glm::vec3(0.0f, 0.0f, 1.0f));
+	rot_hor = glm::rotate(rot_hor, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_hor, 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+
+
 
 	Shader flat_shader(vertex, geo, fragment, "model", "view", "proj");
 	flat_shader.addOptionalUniform("light_position");
@@ -447,13 +435,13 @@ int main() {
 	glm::mat4 model, view, proj;
 	glm::mat4 light_model;
 	calc.setRadius(3.0f);
-	calc.setHorizontal(90.0f);
-	calc.setVetrical(45.0f);
+	calc.setHorizontal(glm::radians(90.0f));
+	calc.setVetrical(glm::radians(45.0f));
 	glm::vec3 light_position = glm::vec3((GLfloat)calc.getX(), (GLfloat)calc.getY(), (GLfloat)calc.getZ());
 
 	//transform order: translate, rotate, scale
 
-	Camera camera(6.0f, 0.01f);
+	Camera camera(6.0f, 0.03f);
 
 	proj = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 
@@ -485,7 +473,7 @@ int main() {
 		time = glfwGetTime();
 		cur_delta += time - last_time;
 		last_time = time;
-		if (cur_delta <= delta_time) {
+		if (cur_delta >= delta_time) {
 
 
 
@@ -518,13 +506,25 @@ int main() {
 			sphere.drawVx((GLsizei)(sphere_buffer.size() / 3));
 
 			//sph.draw(empty, view, proj, light_position, glm::vec3(1.0f, 1.0f, 1.0f));
-			flat_shader.use(empty, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			flat_shader.use(rot_ecl, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			sphere_data.drawVxStrip(1, 0);
 
-			sphere_data.drawVxStrip(9, 0);
+			flat_shader.use(rot_second, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			sphere_data.drawVxStrip(1, 1);
+
+			flat_shader.use(rot_third, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			sphere_data.drawVxStrip(1, 2);
+
+			flat_shader.use(rot_fourth, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			sphere_data.drawVxStrip(1, 3);
+
+			flat_shader.use(rot_hor, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+			sphere_data.drawVxStrip(1, 4);
 
 			glfwSwapBuffers(win);
-		} else
-		cur_delta = 0.0f;
+
+			cur_delta = 0.0f;
+		}
 	}
 
 	glfwDestroyWindow(win);
