@@ -98,7 +98,7 @@ int main() {
 		"void main() {"
 		"  vs_out.sphere_coords = sph_coords;"
 		"  vs_out.color = col;"
-		"  gl_Position = proj * view * model * vec4(0.0, 0.0, 0.0, 1.0);"
+		"  gl_Position = vec4(0.0, 0.0, 0.0, 1.0);"
 		"  vs_out.frag_pos = model * vec4(0.0, 0.0, 0.0, 1.0);"
 		"  vs_out.model = model;"
 		"  vs_out.view = view;"
@@ -135,7 +135,37 @@ int main() {
 		"    EmitVertex();"
 		"    h_angle += delta_h;"
 		"  }"
+		"  EndPrimitive();"
+		"}";
+
+	const char* geo_line =
+		"#version 330 core\n"
+		"layout (points) in;"
+		"layout (line_strip, max_vertices = 2) out;"
+
+		"in VS_OUT {"
+		"  vec3 sphere_coords;"
+		"  mat4 model;"
+		"  mat4 view;"
+		"  mat4 proj;"
+		"  vec3 color;"
+		"  vec4 frag_pos;"
+		"} gs_in[];"
+
+		"out vec3 color;"
+		"out vec4 fragment_position;"
+
+		"void main() {"
+		"  color = gs_in[0].color;"
 		
+		"  fragment_position = vec4(0.0, 1.0, 0.0, 1.0);"
+		"  gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
+		"  EmitVertex();"
+
+		"  fragment_position = vec4(0.0, -1.0, 0.0, 1.0);"
+		"  gl_Position = gs_in[0].proj * gs_in[0].view * gs_in[0].model * fragment_position;"
+		"  EmitVertex();"
+
 		"  EndPrimitive();"
 		"}";
 
@@ -406,7 +436,7 @@ int main() {
 
 	const std::vector<GLfloat> data =
 		//d, horizontal, vertical, color
-	{ glm::radians(0.0f), 0.0, 0.0, 1.0, 0.0, 0.0,                    //flats
+	{ glm::radians(0.0f), 0.0, 0.0, 1.0, 0.0, 0.0,
 	  glm::radians(6.78f), 0.0, 0.0, 0.0, 1.0, 0.0,
 	  glm::radians(-34.36f), 0.0, 0.0, 0.0, 0.0, 1.0,
 	  glm::radians(76.426f), 0.0, glm::radians(45.0f), 1.0, 0.0, 1.0,
@@ -414,18 +444,22 @@ int main() {
 
 	};
 
-	glm::mat4 rot_ecl, rot_second, rot_third, rot_fourth, rot_hor;
-	rot_ecl = glm::rotate(rot_ecl, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_ecl, 23.156f, glm::vec3(0.0f, 0.0f, 1.0f));
-	rot_second = glm::rotate(rot_second, 10.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_second, 30.986f, glm::vec3(0.0f, 0.0f, 1.0f));
-	rot_third = glm::rotate(rot_third, -10.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_third, -78.62f, glm::vec3(0.0f, 0.0f, 1.0f));
-	rot_fourth = glm::rotate(rot_fourth, 90.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_fourth, 33.33f, glm::vec3(0.0f, 0.0f, 1.0f));
-	rot_hor = glm::rotate(rot_hor, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(rot_hor, 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 
-
+	std::vector<glm::mat4> rot_mats;
+	glm::mat4 empty;
+	rot_mats.push_back(glm::rotate(empty, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(empty, 23.156f, glm::vec3(0.0f, 0.0f, 1.0f)));
+	rot_mats.push_back(glm::rotate(empty, 10.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(empty, 30.986f, glm::vec3(0.0f, 0.0f, 1.0f)));
+	rot_mats.push_back(glm::rotate(empty, -10.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(empty, -78.62f, glm::vec3(0.0f, 0.0f, 1.0f)));
+	rot_mats.push_back(glm::rotate(empty, 90.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(empty, 33.33f, glm::vec3(0.0f, 0.0f, 1.0f)));
+	rot_mats.push_back(glm::rotate(empty, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)) * glm::rotate(empty, 0.0f, glm::vec3(0.0f, 0.0f, 1.0f)));
 
 	Shader flat_shader(vertex, geo, fragment, "model", "view", "proj");
 	flat_shader.addOptionalUniform("light_position");
 	flat_shader.addOptionalUniform("light_color");
+	Shader line_shader(vertex, geo_line, fragment, "model", "view", "proj");
+	line_shader.addOptionalUniform("light_position");
+	line_shader.addOptionalUniform("light_color");
+
 	VAO sphere_data;
 	sphere_data.addVertexBufferObject(data, { 3, 3 }, 6, { 0, 3 });
 
@@ -456,7 +490,6 @@ int main() {
 	//glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glm::mat4 empty;
 
 	glEnable(GL_CULL_FACE);
 	//glCullFace(GL_FRONT);
@@ -505,21 +538,17 @@ int main() {
 			sphereShaderProgram.use(empty, view, proj, { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
 			sphere.drawVx((GLsizei)(sphere_buffer.size() / 3));
 
-			//sph.draw(empty, view, proj, light_position, glm::vec3(1.0f, 1.0f, 1.0f));
-			flat_shader.use(rot_ecl, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
-			sphere_data.drawVxStrip(1, 0);
+			//sph.draw(view, proj, light_position, glm::vec3(1.0f, 1.0f, 1.0f));
+			
+			for (int i = 0; i < 5; i++) {
+				flat_shader.use(rot_mats[i], view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+				sphere_data.drawVxStrip(1, i);
+			}
 
-			flat_shader.use(rot_second, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
-			sphere_data.drawVxStrip(1, 1);
-
-			flat_shader.use(rot_third, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
-			sphere_data.drawVxStrip(1, 2);
-
-			flat_shader.use(rot_fourth, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
-			sphere_data.drawVxStrip(1, 3);
-
-			flat_shader.use(rot_hor, view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
-			sphere_data.drawVxStrip(1, 4);
+			for (int i = 0; i < 5; i++) {
+				line_shader.use(rot_mats[i], view, proj, std::vector<glm::vec3> { light_position, glm::vec3(1.0f, 1.0f, 1.0f) });
+				sphere_data.drawVxStrip(1, i);
+			}
 
 			glfwSwapBuffers(win);
 

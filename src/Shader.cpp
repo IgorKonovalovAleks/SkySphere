@@ -175,7 +175,7 @@ void Shader::addOptionalUniform(const char* name)
 	optional.push_back(uForm);
 }
 
-void Shader::use(glm::mat4& m, glm::mat4& v, glm::mat4& p)
+void Shader::use(glm::mat4 m, glm::mat4 v, glm::mat4 p)
 {
 	glUseProgram(id);
 	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(m));
@@ -183,7 +183,7 @@ void Shader::use(glm::mat4& m, glm::mat4& v, glm::mat4& p)
 	glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p));
 }
 
-void Shader::use(glm::mat4& m, glm::mat4& v, glm::mat4& p, const std::vector<glm::vec3>& optional_values)
+void Shader::use(glm::mat4 m, glm::mat4 v, glm::mat4 p, const std::vector<glm::vec3> optional_values)
 {
 	glUseProgram(id);
 	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(m));
